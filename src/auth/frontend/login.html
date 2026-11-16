@@ -1,0 +1,57 @@
+{% extends "shared/frontend/base.html" %}
+
+{% block title %}Sign In - Threat Netra{% endblock %}
+
+{% block content %}
+<div class="auth-container reveal-fade">
+    <div class="auth-header">
+        <span class="eyebrow">CLEARANCE GATEWAY</span>
+        <h2>Access Console</h2>
+        <p class="auth-subtitle">Enter verified credentials to authenticate session.</p>
+    </div>
+
+    <!-- Error Alert Messages -->
+    <div id="authAlert" class="alert-box alert-error" style="display: none;"></div>
+
+    <!-- Quick Demo Account Evaluation Button -->
+    <div class="demo-box">
+        <div class="demo-header">
+            <span class="badge badge-demo">EVALUATION CLEARANCE</span>
+            <span class="mono" style="font-size: 0.6875rem; color: var(--text-muted);">FAST-TRACK</span>
+        </div>
+        <p class="demo-desc">Instant pre-configured session provisioned with full Governmental tier capabilities.</p>
+        <a href="/auth/demo-login" class="btn btn-secondary btn-sm btn-block">Initialize Demo Session</a>
+    </div>
+
+    <div class="divider"><span>OR OPERATOR CREDENTIALS</span></div>
+
+    <!-- Email & Password Form -->
+    <form class="auth-form" id="loginForm" method="POST" action="/auth/login">
+        <div class="form-group">
+            <label for="email">OPERATOR EMAIL</label>
+            <input type="email" id="email" name="email" required placeholder="analyst@threatnetra.gov" autocomplete="email">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">PASSWORD</label>
+            <input type="password" id="password" name="password" required placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+        </div>
+        
+        <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Authenticate Session</button>
+    </form>
+    
+    <div class="auth-links">
+        <p>No active security clearance? <a href="/auth/signup">Submit Application</a></p>
+    </div>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorMsg = urlParams.get('error');
+    if (errorMsg) {
+        const alertBox = document.getElementById('authAlert');
+        alertBox.textContent = decodeURIComponent(errorMsg);
+        alertBox.style.display = 'block';
+    }
+</script>
+{% endblock %}

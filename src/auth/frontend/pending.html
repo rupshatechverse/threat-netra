@@ -1,0 +1,97 @@
+{% extends "shared/frontend/base.html" %}
+
+{% block title %}Application Status - Threat Netra{% endblock %}
+
+{% block content %}
+<div class="auth-container reveal-fade">
+    {% if is_rejected %}
+        <span class="status-indicator" style="color: var(--status-error);">STATUS // CLEARANCE REVOKED</span>
+        <h2>Access Request Denied</h2>
+        <p>Institutional access request has been declined or suspended by the platform administrator.</p>
+        <div class="info-banner" style="border-color: var(--status-error); margin: 2rem 0;">
+            <strong>COMMUNICATIONS ADVISORY</strong>
+            <p>Direct inquiries to platform administration: <span class="mono">{{ owner_email }}</span></p>
+        </div>
+        <div style="margin-top: 1.5rem;">
+            <a href="/auth/logout" class="btn btn-secondary btn-block">Terminate Session</a>
+        </div>
+    {% else %}
+        <span class="status-indicator" style="color: var(--status-warning);">STATUS // PENDING VERIFICATION</span>
+        <h2>Clearance Review</h2>
+        <p class="auth-subtitle">Account registration is currently queued in the administrative clearance backlog.</p>
+
+        <div style="margin: 1.5rem 0;">
+            <span class="badge badge-pending">QUEUE POSITION: AWAITING HOST APPROVAL</span>
+        </div>
+
+        {% if user %}
+        <div class="info-banner" style="margin: 1.5rem 0;">
+            <div class="mono" style="font-size: 0.8125rem;">
+                <div>IDENTITY: <strong>{{ user.email }}</strong></div>
+                {% if user.full_name %}
+                <div style="margin-top: 0.25rem;">DESIG: {{ user.full_name }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="tier-info-box">
+            <span class="eyebrow">CLEARANCE TIERS GRANTED BY HOST:</span>
+            
+            <div class="tier-card" style="border-left: 2px solid var(--status-gov);">
+                <div class="tier-title" style="color: var(--status-gov);">TIER 01 // GOVERNMENTAL CLEARANCE</div>
+                <div class="tier-desc">Automated social graph crawler access. Direct ingestion of profile bios, follower/following networks, and timeline histories for synthetic persona detection.</div>
+            </div>
+
+            <div class="tier-card" style="border-left: 2px solid var(--accent);">
+                <div class="tier-title" style="color: var(--accent);">TIER 02 // STANDARD OSINT CLEARANCE</div>
+                <div class="tier-desc">Targeted Google Dorking operators and open-source search matrices for compliant open-web digital footprint attribution.</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button id="checkStatusBtn" class="btn btn-primary btn-block">Query Approval Status</button>
+            <div id="checkFeedback" class="alert-box mono" style="display: none; font-size: 0.75rem;"></div>
+            <a href="/auth/logout" class="btn btn-subtle btn-sm btn-block">Sign Out</a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    document.getElementById('checkStatusBtn')?.addEventListener('click', async () => {
+        const feedback = document.getElementById('checkFeedback');
+        feedback.style.display = 'block';
+        feedback.textContent = 'CHECKING TELEMETRY STATUS...';
+        feedback.className = 'alert-box mono';
+
+        try {
+            const res = await fetch('/auth/me');
+            if (res.status === 401) {
+                feedback.textContent = 'SESSION EXPIRED. RE-AUTHENTICATING...';
+                setTimeout(() => window.location.href = '/auth/login', 1200);
+                return;
+            }
+            const data = await res.json();
+            if (data.authenticated && data.user) {
+                if (data.user.status === 'approved') {
+                    feedback.className = 'alert-box alert-success mono';
+                    feedback.textContent = `CLEARANCE GRANTED AS [${data.user.role.toUpperCase()}]. INITIALIZING DASHBOARD...`;
+                    setTimeout(() => window.location.href = '/dashboard', 1000);
+                } else if (data.user.status === 'rejected') {
+                    feedback.className = 'alert-box alert-error mono';
+                    feedback.textContent = 'APPLICATION STATUS: DECLINED BY HOST.';
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    feedback.className = 'alert-box mono';
+                    feedback.textContent = 'STATUS: STILL QUEUED FOR HOST REVIEW. RE-CHECK SHORTLY.';
+                }
+            } else {
+                window.location.href = '/auth/login';
+            }
+        } catch (err) {
+            feedback.className = 'alert-box alert-error mono';
+            feedback.textContent = 'TELEMETRY CONNECTION TIMEOUT. RETRY.';
+        }
+    });
+</script>
+{% endblock %}

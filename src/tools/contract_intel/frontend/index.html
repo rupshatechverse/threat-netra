@@ -1,0 +1,1582 @@
+{% extends "shared/frontend/base.html" %}
+
+{% block title %}Contract & Legal Intelligence - Threat Netra{% endblock %}
+
+{% block content %}
+<style>
+/* ==========================================================================
+   PALANTIR-GRADE DEFENSE INTELLIGENCE STYLES - CONTRACT INTEL
+   ========================================================================== */
+.ci-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* User & System Status Top Bar */
+.ci-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.ci-title-group h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0.25rem 0 0.35rem 0;
+    color: var(--text-primary);
+}
+
+.ci-telemetry-meta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ci-telemetry-meta .meta-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--status-success);
+    box-shadow: 0 0 8px var(--status-success);
+}
+
+/* Tab Navigation Switchboard */
+.ci-tab-bar {
+    display: flex;
+    background: #080808;
+    border: 1px solid var(--border);
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.ci-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    padding: 0.85rem 1.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.78125rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.ci-tab-btn:hover {
+    background: #111111;
+    color: var(--text-primary);
+}
+
+.ci-tab-btn.active {
+    background: #121212;
+    color: #FFFFFF;
+    border-bottom: 2px solid var(--accent);
+}
+
+.ci-tab-btn .tab-idx {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Main Workspace Grid */
+.ci-workspace-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .ci-workspace-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Modular Cards */
+.ci-card {
+    background: #0A0A0A;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.ci-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.85rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ci-card-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+    text-transform: uppercase;
+}
+
+.ci-card-sub {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+}
+
+/* Dropzone */
+.ci-dropzone {
+    border: 1px dashed #3A3A3A;
+    background: #000000;
+    padding: 2.25rem 1.25rem;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ci-dropzone:hover, .ci-dropzone.drag-active {
+    border-color: var(--accent);
+    background: rgba(76, 141, 255, 0.03);
+}
+
+.ci-dropzone::before, .ci-dropzone::after {
+    content: '+';
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: #444444;
+}
+.ci-dropzone::before { top: 6px; left: 8px; }
+.ci-dropzone::after { bottom: 6px; right: 8px; }
+
+.ci-dropzone-icon {
+    width: 38px;
+    height: 38px;
+    color: var(--text-secondary);
+    margin-bottom: 0.85rem;
+}
+
+.ci-dropzone-label {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.35rem;
+}
+
+.ci-dropzone-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 1.15rem;
+    line-height: 1.4;
+}
+
+/* File Selected Badge */
+.ci-file-selected {
+    display: none;
+    width: 100%;
+    background: #06090E;
+    border: 1px solid var(--accent);
+    padding: 0.75rem 1rem;
+    margin-top: 1rem;
+    text-align: left;
+}
+
+.ci-file-selected-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ci-file-name {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 230px;
+}
+
+.ci-file-meta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--accent);
+    margin-top: 0.2rem;
+}
+
+.ci-file-remove-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+}
+.ci-file-remove-btn:hover {
+    color: var(--status-error);
+    border-color: var(--status-error);
+}
+
+/* Technical Form Controls */
+.ci-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.ci-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ci-select, .ci-input {
+    width: 100%;
+    background: #000000;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8125rem;
+    font-family: var(--font-sans);
+    transition: border-color 0.15s ease;
+}
+
+.ci-select:focus, .ci-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.ci-btn-execute {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+/* Preset Cards */
+.ci-preset-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #000000;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.65rem 0.85rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ci-preset-btn:hover {
+    background: #0D0D0D;
+    border-color: var(--border-hover);
+    color: #FFFFFF;
+}
+
+.ci-preset-btn .preset-tag {
+    color: var(--accent);
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.ci-preset-btn .preset-arrow {
+    color: var(--text-muted);
+}
+
+.ci-preset-btn:hover .preset-arrow {
+    color: var(--text-primary);
+}
+
+/* Telemetry Ribbon / HUD */
+.ci-telemetry-ribbon {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    background: #0A0A0A;
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .ci-telemetry-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ci-hud-cell {
+    padding: 0.85rem 1rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.ci-hud-cell:last-child {
+    border-right: none;
+}
+
+.ci-hud-cell .hud-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ci-hud-cell .hud-value {
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Loading Scanner State */
+.ci-scanner-banner {
+    display: none;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1.25rem;
+    background: #06090E;
+    border: 1px solid var(--accent);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+}
+
+.ci-pulse-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    animation: ciPulse 1s infinite alternate;
+}
+
+@keyframes ciPulse {
+    from { opacity: 0.3; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1.1); box-shadow: 0 0 10px var(--accent); }
+}
+
+/* Financial Cost Model Cards */
+.ci-cost-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.ci-cost-card {
+    background: #000000;
+    border: 1px solid var(--border);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.ci-cost-title {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.35rem;
+}
+
+.ci-cost-amount {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.35rem;
+}
+
+.ci-cost-formula {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Findings Card */
+.ci-finding-item {
+    background: #000000;
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: border-color 0.15s ease;
+}
+
+.ci-finding-item.sev-high {
+    border-color: #551A18;
+    background: #070303;
+}
+
+.ci-finding-item.sev-medium {
+    border-color: #4A3510;
+    background: #070502;
+}
+
+.ci-finding-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+}
+
+.ci-finding-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ci-badge-sev-high {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background: rgba(248, 81, 73, 0.15);
+    border: 1px solid var(--status-error);
+    color: var(--status-error);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ci-badge-sev-med {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background: rgba(210, 153, 34, 0.15);
+    border: 1px solid var(--status-warning);
+    color: var(--status-warning);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ci-badge-sev-low {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    background: rgba(76, 141, 255, 0.12);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ci-badge-verbatim {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(63, 185, 80, 0.1);
+    border: 1px solid var(--status-success);
+    color: var(--status-success);
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.ci-finding-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0.15rem 0 0 0;
+    line-height: 1.3;
+}
+
+.ci-verbatim-quote {
+    background: #050505;
+    border-left: 2px solid var(--border);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: #D4D4D4;
+}
+
+.ci-finding-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .ci-finding-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ci-finding-col .col-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.ci-finding-col .col-text {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.ci-finding-col .col-text-warn {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: #F1F5F9;
+}
+
+/* Empty State Box */
+.ci-empty-box {
+    border: 1px dashed var(--border);
+    background: #000000;
+    padding: 3.5rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.ci-empty-title {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0.65rem 0 0.35rem 0;
+    letter-spacing: 0.06em;
+}
+
+.ci-empty-desc {
+    font-size: 0.8125rem;
+    max-width: 480px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* Q&A Section Styling */
+.ci-qa-container {
+    max-width: 880px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.ci-query-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.ci-chip-btn {
+    background: #000000;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.65rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ci-chip-btn:hover {
+    border-color: var(--accent);
+    color: #FFFFFF;
+    background: #0D0D0D;
+}
+
+.ci-prompt-bar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.ci-prompt-bar .ci-input {
+    flex: 1;
+    font-family: var(--font-mono);
+}
+
+/* Comparison Section */
+.ci-compare-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.ci-diff-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.ci-diff-table th {
+    background: #000000;
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+}
+
+.ci-diff-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #1C1C1C;
+    vertical-align: top;
+}
+
+.ci-diff-table tr.has-variance {
+    background: rgba(210, 153, 34, 0.03);
+}
+
+.ci-diff-table tr:hover {
+    background: #0E0E0E;
+}
+</style>
+
+<div class="ci-shell">
+
+    <!-- AUSTERE MISSION COMMAND HEADER -->
+    <div class="ci-top-bar">
+        <div class="ci-title-group">
+            <span class="eyebrow" style="margin-bottom: 0.2rem;">SYSTEM // LEGAL FORENSICS &amp; DOCUMENT RECON</span>
+            <h2>Legal Contract &amp; Document Intelligence</h2>
+            <div class="ci-telemetry-meta">
+                <span class="meta-dot"></span>
+                <span>CLEARANCE: {{ user.role | upper }}</span>
+                <span>&bull;</span>
+                <span>PYMUPDF PARSER: ACTIVE</span>
+                <span>&bull;</span>
+                <span>VERBATIM HALLUCINATION DEFENSE: STRICT</span>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <span class="badge badge-status-live" id="auditEngineBadge" style="letter-spacing: 0.08em; padding: 6px 12px;">
+                ENGINE // READY
+            </span>
+            <a href="/dashboard" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
+                &larr; DASHBOARD
+            </a>
+        </div>
+    </div>
+
+    <!-- TAB SWITCHBOARD -->
+    <div class="ci-tab-bar" role="tablist">
+        <button type="button" id="tabAnalyzeBtn" class="ci-tab-btn active" role="tab">
+            <span class="tab-idx">01</span> FORENSIC PDF AUDIT
+        </button>
+        <button type="button" id="tabAskBtn" class="ci-tab-btn" role="tab">
+            <span class="tab-idx">02</span> TARGETED Q&amp;A
+        </button>
+        <button type="button" id="tabCompareBtn" class="ci-tab-btn" role="tab">
+            <span class="tab-idx">03</span> DUAL CONTRACT DIFF
+        </button>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: FORENSIC PDF AUDIT -->
+    <!-- ===================================================================== -->
+    <div id="tabAnalyzeContent">
+        <div class="ci-workspace-grid">
+            
+            <!-- LEFT PANEL: INGESTION BAY & SAMPLES -->
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                
+                <!-- UPLOAD CARD -->
+                <div class="ci-card">
+                    <div class="ci-card-header">
+                        <span class="ci-card-title">DOCUMENT INGESTION BAY</span>
+                        <span class="ci-card-sub">PDF ONLY</span>
+                    </div>
+
+                    <!-- DRAG & DROP ZONE -->
+                    <div id="pdfDropZone" class="ci-dropzone">
+                        <svg class="ci-dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                            <polyline points="9 15 12 12 15 15"></polyline>
+                        </svg>
+                        <div class="ci-dropzone-label">DRAG &amp; DROP CONTRACT (.PDF)</div>
+                        <div class="ci-dropzone-hint">Adobe Acrobat PDF documents up to 25MB<br>Strictly verified against verbatim source text</div>
+                        <input type="file" id="pdfFileInput" accept=".pdf" style="display: none;" />
+                        <button type="button" class="btn btn-secondary btn-sm" id="browsePdfBtn" style="font-size: 0.72rem; padding: 6px 14px;">
+                            BROWSE LOCAL DISK
+                        </button>
+                    </div>
+
+                    <!-- SELECTED FILE STATUS BADGE -->
+                    <div id="selectedPdfInfo" class="ci-file-selected">
+                        <div class="ci-file-selected-row">
+                            <div>
+                                <div class="ci-file-name" id="selectedPdfName">filename.pdf</div>
+                                <div class="ci-file-meta" id="selectedPdfSize">0 KB &bull; STAGED FOR INGESTION</div>
+                            </div>
+                            <button type="button" id="removeSelectedPdfBtn" class="ci-file-remove-btn" title="Remove file">[RESET]</button>
+                        </div>
+                    </div>
+
+                    <!-- INFERENCE SELECTOR -->
+                    <div class="ci-form-group" style="margin-top: 1.25rem;">
+                        <label class="ci-label" for="intelProvider">INFERENCE ORCHESTRATION</label>
+                        <select id="intelProvider" class="ci-select">
+                            <option value="auto">Auto (Groq Cloud + Gemma Failover)</option>
+                            <option value="groq">Groq Cloud LPU (Ultra-Fast)</option>
+                            <option value="gemma">Google Gemma 2 (AI Studio)</option>
+                        </select>
+                    </div>
+
+                    <!-- EXECUTE BUTTON -->
+                    <button type="button" id="executeAuditBtn" class="btn btn-primary ci-btn-execute" disabled>
+                        <span>AUDIT CONTRACT PDF</span>
+                    </button>
+                </div>
+
+                <!-- PRE-STAGED SAMPLE CONTRACTS -->
+                <div class="ci-card">
+                    <div class="ci-card-header">
+                        <span class="ci-card-title">PRE-STAGED DOSSIERS</span>
+                        <span class="ci-card-sub">1-CLICK DEMOS</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        {% for s in samples %}
+                        <button type="button" class="ci-preset-btn load-sample-btn" data-id="{{ s.id }}">
+                            <div>
+                                <span class="preset-tag">[{{ "%02d"|format(loop.index) }}]</span>
+                                <span>{{ s.name }}</span>
+                            </div>
+                            <span class="preset-arrow">&rarr;</span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL: AUDIT STREAM & METRICS -->
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+
+                <!-- TELEMETRY HUD -->
+                <div class="ci-telemetry-ribbon">
+                    <div class="ci-hud-cell">
+                        <span class="hud-label">ACTIVE DOSSIER</span>
+                        <span class="hud-value" id="metaDocName" title="No Document Uploaded" style="font-size: 0.875rem;">AWAITING FILE</span>
+                    </div>
+                    <div class="ci-hud-cell">
+                        <span class="hud-label">PAGES</span>
+                        <span class="hud-value" id="metaDocPages">0</span>
+                    </div>
+                    <div class="ci-hud-cell">
+                        <span class="hud-label">CRITICAL TRAPS</span>
+                        <span class="hud-value" id="metaHighRiskCount" style="color: var(--status-error);">0</span>
+                    </div>
+                    <div class="ci-hud-cell">
+                        <span class="hud-label">ELEVATED RISKS</span>
+                        <span class="hud-value" id="metaMedRiskCount" style="color: var(--status-warning);">0</span>
+                    </div>
+                    <div class="ci-hud-cell">
+                        <span class="hud-label">VERBATIM PROOF</span>
+                        <span class="hud-value" id="metaProofRate" style="color: var(--status-success);">100%</span>
+                    </div>
+                </div>
+
+                <!-- SCANNER RUNNING BANNER -->
+                <div id="analyzeLoadingSpinner" class="ci-scanner-banner">
+                    <span class="ci-pulse-indicator"></span>
+                    <span id="analyzeLoadingText">EXTRACTING BITSTREAM &amp; AUDITING CLAUSES AGAINST RECONCILIATION ENGINE...</span>
+                </div>
+
+                <!-- FINANCIAL LIABILITY MODEL CARD -->
+                <div class="ci-card" id="costModelCard" style="display: none;">
+                    <div class="ci-card-header">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="ci-card-title" style="color: var(--accent);">FINANCIAL LIABILITY &amp; TCO MODEL</span>
+                        </div>
+                        <span class="badge" style="background: rgba(76, 141, 255, 0.12); border: 1px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 0.6875rem;">
+                            CALCULATED EXPOSURE
+                        </span>
+                    </div>
+                    <div id="costModelLinesList" class="ci-cost-grid"></div>
+                </div>
+
+                <!-- CLAUSE FINDINGS LIST -->
+                <div class="ci-card">
+                    <div class="ci-card-header">
+                        <div>
+                            <span class="ci-card-title">FORENSIC CLAUSE FINDINGS</span>
+                        </div>
+                        <span class="badge" id="findingCountBadge" style="font-size: 0.6875rem;">0 VECTORS ISOLATED</span>
+                    </div>
+
+                    <div id="findingsContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div class="ci-empty-box" id="emptyFindingsState">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #444; margin-bottom: 0.5rem;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="22" y1="12" x2="18" y2="12"></line>
+                                <line x1="6" y1="12" x2="2" y2="12"></line>
+                                <line x1="12" y1="6" x2="12" y2="2"></line>
+                                <line x1="12" y1="22" x2="12" y2="18"></line>
+                            </svg>
+                            <div class="ci-empty-title">AWAITING PDF INGESTION</div>
+                            <div class="ci-empty-desc">
+                                Select a contract PDF from your disk or trigger one of the pre-staged sample agreements to perform automatic trap isolation and financial liability calculation.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: INTERACTIVE DOCUMENT Q&A -->
+    <!-- ===================================================================== -->
+    <div id="tabAskContent" style="display: none;">
+        <div class="ci-qa-container">
+            
+            <div class="ci-card">
+                <div class="ci-card-header">
+                    <div>
+                        <span class="ci-card-title">TACTICAL INQUIRY BAY</span>
+                        <div class="ci-card-sub" style="margin-top: 0.2rem;">Cross-examine the loaded document with strict verbatim citations</div>
+                    </div>
+                    <span class="badge" id="qaDocStateBadge" style="font-size: 0.6875rem;">SESSION READY</span>
+                </div>
+
+                <!-- QUICK SHORTCUT QUERY CHIPS -->
+                <div style="margin-bottom: 1.25rem;">
+                    <span class="ci-label" style="display: block; margin-bottom: 0.5rem;">TACTICAL INQUIRY CHIPS:</span>
+                    <div class="ci-query-chips">
+                        <button type="button" class="ci-chip-btn quick-q-btn" data-q="What is the early termination fee if I cancel early?">
+                            [01] EXIT PENALTY
+                        </button>
+                        <button type="button" class="ci-chip-btn quick-q-btn" data-q="Can the vendor unilaterally increase prices or renewal fees?">
+                            [02] PRICE ESCALATIONS
+                        </button>
+                        <button type="button" class="ci-chip-btn quick-q-btn" data-q="How many days advance notice is required to cancel before auto-renewal?">
+                            [03] CANCELLATION NOTICE
+                        </button>
+                        <button type="button" class="ci-chip-btn quick-q-btn" data-q="What happens to our proprietary data and telemetry logs upon termination?">
+                            [04] DATA RIGHTS &amp; TELEMETRY
+                        </button>
+                        <button type="button" class="ci-chip-btn quick-q-btn" data-q="What is the total cumulative liability cap in this agreement?">
+                            [05] LIABILITY LIMITATION
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PROMPT INPUT BAR -->
+                <div class="ci-prompt-bar">
+                    <input type="text" id="askQuestionInput" placeholder="Enter inquiry (e.g. Can the vendor suspend service without warning?)" class="ci-input" />
+                    <button type="button" id="askSubmitBtn" class="btn btn-primary" style="padding: 0 1.5rem; font-family: var(--font-mono); font-size: 0.8125rem; font-weight: 600; white-space: nowrap;">
+                        SUBMIT INQUIRY
+                    </button>
+                </div>
+
+                <!-- LOADING INDICATOR -->
+                <div id="qaLoadingIndicator" class="ci-scanner-banner" style="margin-top: 1.25rem; margin-bottom: 0;">
+                    <span class="ci-pulse-indicator"></span>
+                    <span>SEARCHING DOCUMENT &amp; EXTRACTING VERBATIM CITATIONS...</span>
+                </div>
+
+                <!-- ANSWER CONTAINER -->
+                <div id="qaAnswerCard" style="display: none; margin-top: 1.25rem; border: 1px solid var(--border); background: #000000; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+                        <span class="ci-card-title" style="color: var(--status-success);">FACTUAL ASSESSMENT</span>
+                        <span class="badge" id="qaCitationsBadge" style="font-size: 0.6875rem;">0 CITATIONS</span>
+                    </div>
+                    <div id="qaAnswerText" style="font-size: 0.875rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 1.25rem;"></div>
+
+                    <div id="qaCitationsContainer" style="border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <span class="ci-label" style="display: block; margin-bottom: 0.65rem;">VERBATIM DOCUMENT PASSAGES:</span>
+                        <div id="qaCitationsList" style="display: flex; flex-direction: column; gap: 0.65rem;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: DUAL CONTRACT DIFF -->
+    <!-- ===================================================================== -->
+    <div id="tabCompareContent" style="display: none;">
+        <div class="ci-compare-container">
+            
+            <div class="ci-card">
+                <div class="ci-card-header">
+                    <div>
+                        <span class="ci-card-title">DUAL AGREEMENT FORENSICS</span>
+                        <div class="ci-card-sub" style="margin-top: 0.2rem;">Side-by-side covenant, liability cap, and auto-renewal differential analysis</div>
+                    </div>
+                    <button type="button" id="loadPresetCompareBtn" class="btn btn-secondary btn-sm" style="font-family: var(--font-mono); font-size: 0.72rem; padding: 6px 14px;">
+                        [DEMO DIFF: PLAN A vs PLAN B]
+                    </button>
+                </div>
+
+                <!-- DUAL FILE UPLOAD BAYS -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+                    
+                    <!-- BAY A -->
+                    <div id="compareDropA" class="ci-dropzone" style="padding: 1.75rem 1rem;">
+                        <svg class="ci-dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 30px; height: 30px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <div class="ci-dropzone-label" id="compareTitleA">CONTRACT A (.PDF)</div>
+                        <div class="ci-dropzone-hint" id="compareSubA">Drag &amp; drop or click to stage</div>
+                        <input type="file" id="compareFileA" accept=".pdf" style="display: none;" />
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnSelectA" style="font-size: 0.7rem; padding: 4px 10px;">
+                            BROWSE FILE A
+                        </button>
+                    </div>
+
+                    <!-- BAY B -->
+                    <div id="compareDropB" class="ci-dropzone" style="padding: 1.75rem 1rem;">
+                        <svg class="ci-dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 30px; height: 30px;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <div class="ci-dropzone-label" id="compareTitleB">CONTRACT B (.PDF)</div>
+                        <div class="ci-dropzone-hint" id="compareSubB">Drag &amp; drop or click to stage</div>
+                        <input type="file" id="compareFileB" accept=".pdf" style="display: none;" />
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnSelectB" style="font-size: 0.7rem; padding: 4px 10px;">
+                            BROWSE FILE B
+                        </button>
+                    </div>
+
+                </div>
+
+                <button type="button" id="runCompareUploadBtn" class="btn btn-primary ci-btn-execute" disabled>
+                    <span>RUN DUAL CONTRACT DIFFERENTIAL</span>
+                </button>
+            </div>
+
+            <!-- COMPARISON SCANNER SPINNER -->
+            <div id="compareLoadingIndicator" class="ci-scanner-banner" style="margin-bottom: 0;">
+                <span class="ci-pulse-indicator"></span>
+                <span>EXTRACTING STRUCTURED CLAUSES &amp; COMPUTING VARIANCE MATRIX...</span>
+            </div>
+
+            <!-- RESULTS AREA -->
+            <div id="compareResultsArea" style="display: none; flex-direction: column; gap: 1.5rem;">
+                
+                <!-- STRATEGIC VERDICT -->
+                <div class="ci-card" style="border-color: var(--accent); background: #05080E;">
+                    <div class="ci-card-header" style="border-bottom-color: rgba(76, 141, 255, 0.2);">
+                        <span class="ci-card-title" style="color: var(--accent);">STRATEGIC RISK VERDICT &amp; COMPARISON SUMMARY</span>
+                        <span class="badge" style="background: rgba(76, 141, 255, 0.15); border: 1px solid var(--accent); color: var(--accent); font-size: 0.6875rem;">
+                            EXECUTIVE AUDIT
+                        </span>
+                    </div>
+                    <div id="compareVerdictText" style="font-size: 0.875rem; line-height: 1.6; color: #FFFFFF;"></div>
+                </div>
+
+                <!-- DIFF TABLE -->
+                <div class="ci-card" style="padding: 0; overflow-x: auto;">
+                    <table class="ci-diff-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 220px;">COVENANT / CLAUSE</th>
+                                <th id="thCompareNameA">CONTRACT A</th>
+                                <th id="thCompareNameB">CONTRACT B</th>
+                                <th style="width: 120px; text-align: center;">VARIANCE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compareTableBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- SCRIPT LOGIC -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    let currentDocumentSha256 = null;
+    let selectedPdfFile = null;
+
+    // Tab Navigation
+    const tabAnalyzeBtn = document.getElementById('tabAnalyzeBtn');
+    const tabAskBtn = document.getElementById('tabAskBtn');
+    const tabCompareBtn = document.getElementById('tabCompareBtn');
+    const tabAnalyzeContent = document.getElementById('tabAnalyzeContent');
+    const tabAskContent = document.getElementById('tabAskContent');
+    const tabCompareContent = document.getElementById('tabCompareContent');
+
+    function switchTab(activeBtn, activeContent) {
+        [tabAnalyzeBtn, tabAskBtn, tabCompareBtn].forEach(b => b.classList.remove('active'));
+        [tabAnalyzeContent, tabAskContent, tabCompareContent].forEach(c => c.style.display = 'none');
+        activeBtn.classList.add('active');
+        activeContent.style.display = 'block';
+    }
+
+    tabAnalyzeBtn.addEventListener('click', () => switchTab(tabAnalyzeBtn, tabAnalyzeContent));
+    tabAskBtn.addEventListener('click', () => switchTab(tabAskBtn, tabAskContent));
+    tabCompareBtn.addEventListener('click', () => switchTab(tabCompareBtn, tabCompareContent));
+
+    // Elements
+    const pdfDropZone = document.getElementById('pdfDropZone');
+    const pdfFileInput = document.getElementById('pdfFileInput');
+    const browsePdfBtn = document.getElementById('browsePdfBtn');
+    const selectedPdfInfo = document.getElementById('selectedPdfInfo');
+    const selectedPdfName = document.getElementById('selectedPdfName');
+    const selectedPdfSize = document.getElementById('selectedPdfSize');
+    const removeSelectedPdfBtn = document.getElementById('removeSelectedPdfBtn');
+    const executeAuditBtn = document.getElementById('executeAuditBtn');
+    const intelProvider = document.getElementById('intelProvider');
+    const analyzeLoadingSpinner = document.getElementById('analyzeLoadingSpinner');
+
+    const metaDocName = document.getElementById('metaDocName');
+    const metaDocPages = document.getElementById('metaDocPages');
+    const metaHighRiskCount = document.getElementById('metaHighRiskCount');
+    const metaMedRiskCount = document.getElementById('metaMedRiskCount');
+    const metaProofRate = document.getElementById('metaProofRate');
+
+    const costModelCard = document.getElementById('costModelCard');
+    const costModelLinesList = document.getElementById('costModelLinesList');
+    const findingsContainer = document.getElementById('findingsContainer');
+    const findingCountBadge = document.getElementById('findingCountBadge');
+
+    // Click Browse
+    browsePdfBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        pdfFileInput.click();
+    });
+
+    pdfDropZone.addEventListener('click', (e) => {
+        if (e.target !== browsePdfBtn) {
+            pdfFileInput.click();
+        }
+    });
+
+    // Drag-and-Drop Handlers
+    pdfDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        pdfDropZone.classList.add('drag-active');
+    });
+
+    pdfDropZone.addEventListener('dragleave', () => {
+        pdfDropZone.classList.remove('drag-active');
+    });
+
+    pdfDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        pdfDropZone.classList.remove('drag-active');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleSelectedFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    pdfFileInput.addEventListener('change', () => {
+        if (pdfFileInput.files && pdfFileInput.files.length > 0) {
+            handleSelectedFile(pdfFileInput.files[0]);
+        }
+    });
+
+    removeSelectedPdfBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedPdfFile = null;
+        pdfFileInput.value = '';
+        selectedPdfInfo.style.display = 'none';
+        executeAuditBtn.disabled = true;
+        executeAuditBtn.innerHTML = '<span>AUDIT CONTRACT PDF</span>';
+    });
+
+    function handleSelectedFile(file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            alert('Security constraint: Only Adobe PDF agreements (.pdf) are permitted.');
+            return;
+        }
+        selectedPdfFile = file;
+        selectedPdfInfo.style.display = 'block';
+        selectedPdfName.innerText = file.name;
+        selectedPdfSize.innerText = `${(file.size / 1024).toFixed(1)} KB \u2022 READY FOR FORENSIC SCAN`;
+        executeAuditBtn.disabled = false;
+        executeAuditBtn.innerHTML = `<span>AUDIT ${escapeHtml(file.name.toUpperCase())}</span>`;
+    }
+
+    // Execute PDF Audit
+    executeAuditBtn.addEventListener('click', async () => {
+        if (!selectedPdfFile) return;
+
+        analyzeLoadingSpinner.style.display = 'flex';
+        findingsContainer.innerHTML = '';
+        metaDocName.innerText = selectedPdfFile.name;
+        metaDocName.title = selectedPdfFile.name;
+
+        const formData = new FormData();
+        formData.append('file', selectedPdfFile);
+        formData.append('provider', intelProvider.value);
+
+        try {
+            const res = await fetch('/tools/contract_intel/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || `Upload failed with HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            renderAnalysisResult(data);
+        } catch (err) {
+            findingsContainer.innerHTML = `
+                <div style="background: #150606; border: 1px solid var(--status-error); padding: 1.25rem;">
+                    <div style="font-family: var(--font-mono); color: var(--status-error); font-size: 0.75rem; font-weight: 600;">[PARSER EXCEPTION // INGESTION FAILURE]</div>
+                    <div style="font-size: 0.8125rem; margin-top: 0.35rem; color: #FFFFFF;">${escapeHtml(err.message)}</div>
+                </div>
+            `;
+        } finally {
+            analyzeLoadingSpinner.style.display = 'none';
+        }
+    });
+
+    // 1-Click Sample Audit
+    document.querySelectorAll('.load-sample-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const sampleId = btn.getAttribute('data-id');
+            analyzeLoadingSpinner.style.display = 'flex';
+            findingsContainer.innerHTML = '';
+
+            try {
+                const res = await fetch(`/tools/contract_intel/api/analyze-sample/${sampleId}?provider=${intelProvider.value}`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Sample analysis failed');
+                }
+
+                const data = await res.json();
+                renderAnalysisResult(data);
+            } catch (err) {
+                alert('Failed to audit sample agreement: ' + err.message);
+            } finally {
+                analyzeLoadingSpinner.style.display = 'none';
+            }
+        });
+    });
+
+    // Render Analysis Result
+    function renderAnalysisResult(data) {
+        currentDocumentSha256 = data.document_meta ? data.document_meta.sha256 : null;
+        const docName = data.document_meta ? data.document_meta.path : 'Active Contract';
+        metaDocName.innerText = docName;
+        metaDocName.title = docName;
+        metaDocPages.innerText = data.document_meta ? data.document_meta.pages : '1';
+
+        const findings = data.findings || [];
+        const costs = data.cost_model || [];
+        const discarded = data.discarded_findings || [];
+
+        let highCount = 0;
+        let medCount = 0;
+        findings.forEach(f => {
+            if (f.severity === 'high') highCount++;
+            else if (f.severity === 'medium') medCount++;
+        });
+
+        metaHighRiskCount.innerText = highCount;
+        metaMedRiskCount.innerText = medCount;
+        findingCountBadge.innerText = `${findings.length} VECTORS ISOLATED`;
+
+        const totalClauses = findings.length + discarded.length;
+        const proofPercent = totalClauses > 0 ? Math.round((findings.length / totalClauses) * 100) : 100;
+        metaProofRate.innerText = `${proofPercent}% PROVEN`;
+
+        // Render Financial Model
+        if (costs.length > 0) {
+            costModelCard.style.display = 'flex';
+            costModelLinesList.innerHTML = '';
+            costs.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'ci-cost-card';
+                div.innerHTML = `
+                    <div class="ci-cost-title">${escapeHtml(c.label)}</div>
+                    <div class="ci-cost-amount">
+                        ${c.formatted_amount ? escapeHtml(c.formatted_amount) : (c.missing_reason ? '<span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">' + escapeHtml(c.missing_reason) + '</span>' : 'N/A')}
+                    </div>
+                    <div class="ci-cost-formula">${escapeHtml(c.formula_string)}</div>
+                `;
+                costModelLinesList.appendChild(div);
+            });
+        } else {
+            costModelCard.style.display = 'none';
+        }
+
+        // Render Findings
+        if (findings.length === 0) {
+            findingsContainer.innerHTML = `
+                <div class="ci-empty-box">
+                    <div class="ci-empty-title">NO HIGH-RISK TRAP COVENANTS IDENTIFIED</div>
+                    <div class="ci-empty-desc">Document analysis completed. All clauses adhere to balanced liability benchmarks.</div>
+                </div>
+            `;
+            return;
+        }
+
+        findingsContainer.innerHTML = '';
+        findings.forEach(f => {
+            const isHigh = f.severity === 'high';
+            const isMed = f.severity === 'medium';
+            const sevClass = isHigh ? 'sev-high' : (isMed ? 'sev-medium' : '');
+            const badgeClass = isHigh ? 'ci-badge-sev-high' : (isMed ? 'ci-badge-sev-med' : 'ci-badge-sev-low');
+
+            const card = document.createElement('div');
+            card.className = `ci-finding-item ${sevClass}`;
+
+            card.innerHTML = `
+                <div class="ci-finding-header">
+                    <div class="ci-finding-tags">
+                        <span class="${badgeClass}">
+                            ${escapeHtml(f.severity)} RISK // ${escapeHtml(f.category)}
+                        </span>
+                        <span class="ci-badge-verbatim">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            VERBATIM CITATION &bull; PAGE ${f.page}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="ci-finding-title">${escapeHtml(f.title)}</div>
+
+                <div class="ci-verbatim-quote">
+                    <span style="display:block; font-size:0.65rem; color:var(--text-muted); margin-bottom:0.25rem;">VERBATIM DOCUMENT PASSAGE:</span>
+                    &ldquo;${escapeHtml(f.source_text)}&rdquo;
+                </div>
+
+                <div class="ci-finding-grid">
+                    <div class="ci-finding-col">
+                        <span class="col-label">FORENSIC INTERPRETATION:</span>
+                        <div class="col-text">${escapeHtml(f.explanation)}</div>
+                    </div>
+                    <div class="ci-finding-col">
+                        <span class="col-label" style="color: var(--status-warning);">OPERATIONAL EXPOSURE:</span>
+                        <div class="col-text-warn">${escapeHtml(f.potential_consequence)}</div>
+                    </div>
+                </div>
+            `;
+            findingsContainer.appendChild(card);
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // TAB 2: INTERACTIVE Q&A
+    // -------------------------------------------------------------------------
+    const askQuestionInput = document.getElementById('askQuestionInput');
+    const askSubmitBtn = document.getElementById('askSubmitBtn');
+    const qaLoadingIndicator = document.getElementById('qaLoadingIndicator');
+    const qaAnswerCard = document.getElementById('qaAnswerCard');
+    const qaAnswerText = document.getElementById('qaAnswerText');
+    const qaCitationsBadge = document.getElementById('qaCitationsBadge');
+    const qaCitationsList = document.getElementById('qaCitationsList');
+
+    document.querySelectorAll('.quick-q-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            askQuestionInput.value = btn.getAttribute('data-q');
+            submitQuestion();
+        });
+    });
+
+    askSubmitBtn.addEventListener('click', submitQuestion);
+    askQuestionInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            submitQuestion();
+        }
+    });
+
+    async function submitQuestion() {
+        const q = askQuestionInput.value.trim();
+        if (!q) return;
+
+        qaLoadingIndicator.style.display = 'flex';
+        qaAnswerCard.style.display = 'none';
+
+        try {
+            const res = await fetch('/tools/contract_intel/api/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: q,
+                    sha256: currentDocumentSha256
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || `Query failed (${res.status})`);
+            }
+
+            const data = await res.json();
+            qaAnswerCard.style.display = 'block';
+            qaAnswerText.innerText = data.answer;
+
+            const citations = data.citations || [];
+            qaCitationsBadge.innerText = `${citations.length} VERBATIM CITATIONS`;
+            qaCitationsList.innerHTML = '';
+
+            if (citations.length > 0) {
+                citations.forEach(c => {
+                    const div = document.createElement('div');
+                    div.style.background = '#050505';
+                    div.style.border = '1px solid var(--border)';
+                    div.style.padding = '0.65rem 0.85rem';
+                    div.style.fontFamily = 'var(--font-mono)';
+                    div.style.fontSize = '0.75rem';
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+                            <span style="color:var(--accent); font-weight:600;">PAGE ${c.page}</span>
+                            <span style="color:var(--status-success);">${c.verified ? '[VERIFIED IN SOURCE TEXT]' : '[RECONCILED]'}</span>
+                        </div>
+                        <div style="color: #DDD; line-height: 1.45;">&ldquo;${escapeHtml(c.quote)}&rdquo;</div>
+                    `;
+                    qaCitationsList.appendChild(div);
+                });
+            } else {
+                qaCitationsList.innerHTML = '<div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">No direct verbatim citation isolated for this inquiry.</div>';
+            }
+        } catch (e) {
+            qaAnswerCard.style.display = 'block';
+            qaAnswerText.innerHTML = `<span style="color:var(--status-error); font-family:var(--font-mono);">[QUERY ERROR]: ${escapeHtml(e.message)}</span>`;
+        } finally {
+            qaLoadingIndicator.style.display = 'none';
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // TAB 3: DUAL CONTRACT COMPARISON
+    // -------------------------------------------------------------------------
+    const loadPresetCompareBtn = document.getElementById('loadPresetCompareBtn');
+    const compareDropA = document.getElementById('compareDropA');
+    const compareDropB = document.getElementById('compareDropB');
+    const compareFileA = document.getElementById('compareFileA');
+    const compareFileB = document.getElementById('compareFileB');
+    const btnSelectA = document.getElementById('btnSelectA');
+    const btnSelectB = document.getElementById('btnSelectB');
+    const compareTitleA = document.getElementById('compareTitleA');
+    const compareSubA = document.getElementById('compareSubA');
+    const compareTitleB = document.getElementById('compareTitleB');
+    const compareSubB = document.getElementById('compareSubB');
+    const runCompareUploadBtn = document.getElementById('runCompareUploadBtn');
+    const compareLoadingIndicator = document.getElementById('compareLoadingIndicator');
+    const compareResultsArea = document.getElementById('compareResultsArea');
+    const compareVerdictText = document.getElementById('compareVerdictText');
+    const compareTableBody = document.getElementById('compareTableBody');
+    const thCompareNameA = document.getElementById('thCompareNameA');
+    const thCompareNameB = document.getElementById('thCompareNameB');
+
+    let fileASelected = null;
+    let fileBSelected = null;
+
+    btnSelectA.addEventListener('click', (e) => { e.stopPropagation(); compareFileA.click(); });
+    compareDropA.addEventListener('click', () => compareFileA.click());
+    btnSelectB.addEventListener('click', (e) => { e.stopPropagation(); compareFileB.click(); });
+    compareDropB.addEventListener('click', () => compareFileB.click());
+
+    compareFileA.addEventListener('change', () => {
+        if (compareFileA.files && compareFileA.files[0]) {
+            fileASelected = compareFileA.files[0];
+            compareTitleA.innerText = fileASelected.name;
+            compareSubA.innerText = `${(fileASelected.size / 1024).toFixed(1)} KB (STAGED)`;
+            checkCompareReady();
+        }
+    });
+
+    compareFileB.addEventListener('change', () => {
+        if (compareFileB.files && compareFileB.files[0]) {
+            fileBSelected = compareFileB.files[0];
+            compareTitleB.innerText = fileBSelected.name;
+            compareSubB.innerText = `${(fileBSelected.size / 1024).toFixed(1)} KB (STAGED)`;
+            checkCompareReady();
+        }
+    });
+
+    function checkCompareReady() {
+        if (fileASelected && fileBSelected) {
+            runCompareUploadBtn.disabled = false;
+        }
+    }
+
+    runCompareUploadBtn.addEventListener('click', async () => {
+        if (!fileASelected || !fileBSelected) return;
+
+        compareLoadingIndicator.style.display = 'flex';
+        compareResultsArea.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('file_a', fileASelected);
+        formData.append('file_b', fileBSelected);
+        formData.append('provider', intelProvider.value);
+
+        try {
+            const res = await fetch('/tools/contract_intel/api/compare-upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || `Comparison failed (${res.status})`);
+            }
+
+            const data = await res.json();
+            renderCompareResults(data);
+        } catch (e) {
+            alert('Comparison error: ' + e.message);
+        } finally {
+            compareLoadingIndicator.style.display = 'none';
+        }
+    });
+
+    // Preset Comparison
+    loadPresetCompareBtn.addEventListener('click', async () => {
+        compareLoadingIndicator.style.display = 'flex';
+        compareResultsArea.style.display = 'none';
+
+        try {
+            const [resA, resB] = await Promise.all([
+                fetch('/tools/contract_intel/api/sample/sample_a_restrictive'),
+                fetch('/tools/contract_intel/api/sample/sample_b_flexible')
+            ]);
+            const dataA = await resA.json();
+            const dataB = await resB.json();
+
+            const compRes = await fetch('/tools/contract_intel/api/compare', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text_a: dataA.text,
+                    text_b: dataB.text,
+                    name_a: dataA.name,
+                    name_b: dataB.name,
+                    provider: intelProvider.value
+                })
+            });
+
+            if (!compRes.ok) throw new Error('Preset comparison failed');
+            const data = await compRes.json();
+            renderCompareResults(data);
+        } catch (e) {
+            alert('Error running preset comparison: ' + e.message);
+        } finally {
+            compareLoadingIndicator.style.display = 'none';
+        }
+    });
+
+    function renderCompareResults(data) {
+        thCompareNameA.innerText = data.name_a;
+        thCompareNameB.innerText = data.name_b;
+        compareVerdictText.innerText = data.verdict;
+
+        compareTableBody.innerHTML = '';
+        (data.comparison_table || []).forEach(row => {
+            const tr = document.createElement('tr');
+            if (row.diff) tr.className = 'has-variance';
+
+            tr.innerHTML = `
+                <td style="font-family: var(--font-mono); font-weight: 600; color: #FFFFFF;">${escapeHtml(row.label)}</td>
+                <td style="font-family: var(--font-mono); color: ${row.diff ? 'var(--status-error)' : 'var(--text-secondary)'};">
+                    ${escapeHtml(row.a_val)} ${row.a_ev ? `<div style="color:var(--text-muted); font-size:0.6875rem; margin-top:2px;">[${escapeHtml(row.a_ev)}]</div>` : ''}
+                </td>
+                <td style="font-family: var(--font-mono); color: ${row.diff ? 'var(--status-success)' : 'var(--text-secondary)'};">
+                    ${escapeHtml(row.b_val)} ${row.b_ev ? `<div style="color:var(--text-muted); font-size:0.6875rem; margin-top:2px;">[${escapeHtml(row.b_ev)}]</div>` : ''}
+                </td>
+                <td style="text-align: center;">
+                    ${row.diff ? '<span class="badge" style="background:rgba(210,153,34,0.15); border:1px solid var(--status-warning); color:var(--status-warning); font-size:0.65rem;">VARIANCE</span>' : '<span style="font-family:var(--font-mono); color:var(--text-muted); font-size:0.6875rem;">IDENTICAL</span>'}
+                </td>
+            `;
+            compareTableBody.appendChild(tr);
+        });
+
+        compareResultsArea.style.display = 'flex';
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+});
+</script>
+{% endblock %}
